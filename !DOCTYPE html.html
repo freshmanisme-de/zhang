@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>药品管理系统（离线版）</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    h1 { font-size: 24px; }
+    input, select, button { margin: 5px 0; padding: 5px; width: 100%; }
+    .medicine { border: 1px solid #aaa; padding: 10px; margin: 5px 0; }
+    .category { font-weight: bold; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>药品管理系统（离线使用）</h1>
+
+  <input id="search" type="text" placeholder="搜索药品名称..." />
+
+  <h2>添加药品</h2>
+  <input id="name" type="text" placeholder="药品名称" />
+  <select id="category">
+    <option disabled selected>选择分类</option>
+    <option>抗生素</option>
+    <option>中成药</option>
+    <option>维生素</option>
+    <option>感冒药</option>
+    <option>镇痛药</option>
+    <option>降压药</option>
+    <option>降糖药</option>
+    <option>胃肠药</option>
+    <option>外用药</option>
+    <option>消炎药</option>
+    <option>抗过敏药</option>
+    <option>抗病毒药</option>
+    <option>妇科药</option>
+    <option>儿科药</option>
+    <option>眼科药</option>
+    <option>耳鼻喉科药</option>
+    <option>保健品</option>
+    <option>其他</option>
+  </select>
+  <input id="location" type="text" placeholder="位置（如A1柜）" />
+  <input id="quantity" type="number" placeholder="数量" min="0" />
+  <input id="expiry" type="date" placeholder="有效期" />
+  <button onclick="addMedicine()">添加药品</button>
+
+  <div id="medicine-list"></div>
+
+  <script>
+    const searchInput = document.getElementById("search");
+    const medicineList = document.getElementById("medicine-list");
+
+    function getMedicines() {
+      return JSON.parse(localStorage.getItem("medicines") || "[]");
+    }
+
+    function saveMedicines(data) {
+      localStorage.setItem("medicines", JSON.stringify(data));
+    }
+
+    function addMedicine() {
+      const name = document.getElementById("name").value.trim();
+      const category = document.getElementById("category").value;
+      const location = document.getElementById("location").value.trim();
+      const quantity = parseInt(document.getElementById("quantity").value);
+      const expiry = document.getElementById("expiry").value;
+
+      if (!name || !category || isNaN(quantity)) {
+        alert("请完整填写信息");
+        return;
+      }
+
+      const meds = getMedicines();
+      meds.push({ name, category, location, quantity, expiry });
+      saveMedicines(meds);
+      displayMedicines();
+      document.querySelectorAll("input").forEach(i => i.value = "");
+    }
+
+    function displayMedicines(filter = "") {
+      const meds = getMedicines().filter(m => m.name.includes(filter));
+      const grouped = {};
+
+      meds.forEach(m => {
+        if (!grouped[m.category]) grouped[m.category] = [];
+        grouped[m.category].push(m);
+      });
+
+      medicineList.innerHTML = "";
+      for (const [category, list] of Object.entries(grouped)) {
+        const catElem = document.createElement("div");
+        catElem.className = "category";
+        catElem.textContent = category;
+        medicineList.appendChild(catElem);
+
+        list.forEach(m => {
+          const div = document.createElement("div");
+          div.className = "medicine";
+          div.innerHTML = `<b>${m.name}</b>，数量：${m.quantity}，位置：${m.location}，有效期：${m.expiry || "无"}`;
+          medicineList.appendChild(div);
+        });
+      }
+    }
+
+    searchInput.addEventListener("input", () => displayMedicines(searchInput.value.trim()));
+    window.onload = () => displayMedicines();
+  </script>
+</body>
+</html>
